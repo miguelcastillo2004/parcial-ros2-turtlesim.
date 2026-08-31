@@ -1,0 +1,4 @@
+int8 mode      # 1: Manual, 2: Circulo
+int8 direction # 1: Antihorario, -1: Horario (Solo aplica para modo 2)
+---
+bool success
