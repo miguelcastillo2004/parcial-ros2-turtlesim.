@@ -1,0 +1,5 @@
+geometry_msgs/Point[] waypoints
+---
+bool success
+---
+int32 current_point_index
