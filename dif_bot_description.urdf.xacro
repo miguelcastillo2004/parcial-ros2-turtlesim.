@@ -8,14 +8,56 @@
   <xacro:property name="wheel_radius" value="0.06"/>
   <xacro:property name="wheel_width" value="0.04"/>
 
-  <!-- Materiales y Colores -->
+  <!-- ========================================== -->
+  <!-- MACROS DE INERCIA (Fórmulas Físicas)       -->
+  <!-- ========================================== -->
+  
+  <!-- Inercia para un prisma rectangular (Caja) -->
+  <xacro:macro name="box_inertia" params="m x y z o_xyz o_rpy">
+    <inertial>
+      <origin xyz="${o_xyz}" rpy="${o_rpy}"/>
+      <mass value="${m}"/>
+      <inertia ixx="${(m/12)*(y*y + z*z)}" ixy="0.0" ixz="0.0"
+               iyy="${(m/12)*(x*x + z*z)}" iyz="0.0"
+               izz="${(m/12)*(x*x + y*y)}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Inercia para un cilindro sólido -->
+  <xacro:macro name="cylinder_inertia" params="m r h o_xyz o_rpy">
+    <inertial>
+      <origin xyz="${o_xyz}" rpy="${o_rpy}"/>
+      <mass value="${m}"/>
+      <inertia ixx="${(m/12)*(3*r*r + h*h)}" ixy="0.0" ixz="0.0"
+               iyy="${(m/12)*(3*r*r + h*h)}" iyz="0.0"
+               izz="${(m/2)*(r*r)}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Inercia para una esfera sólida -->
+  <xacro:macro name="sphere_inertia" params="m r o_xyz o_rpy">
+    <inertial>
+      <origin xyz="${o_xyz}" rpy="${o_rpy}"/>
+      <mass value="${m}"/>
+      <inertia ixx="${(2/5)*m*r*r}" ixy="0.0" ixz="0.0"
+               iyy="${(2/5)*m*r*r}" iyz="0.0"
+               izz="${(2/5)*m*r*r}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- ========================================== -->
+  <!-- MATERIALES                                 -->
+  <!-- ========================================== -->
   <material name="blue"><color rgba="0.1 0.3 0.8 1.0"/></material>
   <material name="black"><color rgba="0.1 0.1 0.1 1.0"/></material>
 
-  <!-- Base Footprint (Origen proyectado en el suelo) -->
+  <!-- ========================================== -->
+  <!-- ESTRUCTURA DEL ROBOT (Links y Joints)      -->
+  <!-- ========================================== -->
+
+  <!-- Base Footprint -->
   <link name="base_footprint"/>
 
-  <!-- Joint de anclaje al chasis -->
   <joint name="base_joint" type="fixed">
     <parent link="base_footprint"/>
     <child link="base_link"/>
@@ -25,54 +67,79 @@
   <!-- Chasis (Base Link) -->
   <link name="base_link">
     <visual>
-      <!-- Se eleva a la mitad de su altura para que el origen quede en su base -->
       <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
       <geometry>
         <box size="${base_length} ${base_width} ${base_height}"/>
       </geometry>
       <material name="blue"/>
     </visual>
+    <!-- Colisión -->
+    <collision>
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+    </collision>
+    <!-- Inercia (Masa: 5 kg) -->
+    <xacro:box_inertia m="5.0" x="${base_length}" y="${base_width}" z="${base_height}" o_xyz="0 0 ${base_height/2}" o_rpy="0 0 0"/>
   </link>
 
   <!-- Macro para Ruedas de Tracción -->
   <xacro:macro name="wheel" params="prefix x_reflect y_reflect">
     <link name="${prefix}_wheel">
       <visual>
-        <!-- Rotación de 90 grados en X (1.5708 rad) para acostar el cilindro -->
         <origin xyz="0 0 0" rpy="1.5708 0 0"/>
         <geometry>
           <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
         </geometry>
         <material name="black"/>
       </visual>
+      <!-- Colisión -->
+      <collision>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </collision>
+      <!-- Inercia (Masa: 0.5 kg) -->
+      <xacro:cylinder_inertia m="0.5" r="${wheel_radius}" h="${wheel_width}" o_xyz="0 0 0" o_rpy="1.5708 0 0"/>
     </link>
 
     <joint name="${prefix}_wheel_joint" type="continuous">
       <parent link="base_link"/>
       <child link="${prefix}_wheel"/>
       <origin xyz="${x_reflect * (base_length/4)} ${y_reflect * (base_width/2 + wheel_width/2)} 0" rpy="0 0 0"/>
-      <axis xyz="0 1 0"/> <!-- Gira sobre el eje Y -->
+      <axis xyz="0 1 0"/>
     </joint>
   </xacro:macro>
 
-  <!-- Instanciar ruedas usando la macro -->
+  <!-- Instanciar ruedas -->
   <xacro:wheel prefix="left" x_reflect="-1" y_reflect="1" />
   <xacro:wheel prefix="right" x_reflect="-1" y_reflect="-1" />
 
-  <!-- Rueda Caster (Soporte frontal) -->
+  <!-- Rueda Caster -->
   <link name="caster_wheel">
     <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <sphere radius="${wheel_radius/2}"/>
       </geometry>
       <material name="black"/>
     </visual>
+    <!-- Colisión -->
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="${wheel_radius/2}"/>
+      </geometry>
+    </collision>
+    <!-- Inercia (Masa: 0.2 kg) -->
+    <xacro:sphere_inertia m="0.2" r="${wheel_radius/2}" o_xyz="0 0 0" o_rpy="0 0 0"/>
   </link>
 
   <joint name="caster_joint" type="fixed">
     <parent link="base_link"/>
     <child link="caster_wheel"/>
-    <!-- Posicionada en la parte frontal y hacia abajo para tocar el suelo -->
     <origin xyz="${base_length/3} 0 ${-wheel_radius/2}" rpy="0 0 0"/>
   </joint>
 
