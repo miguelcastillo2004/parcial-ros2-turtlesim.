@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="dif_bot">
+
+  <!-- Propiedades Dimensionales -->
+  <xacro:property name="base_length" value="0.4"/>
+  <xacro:property name="base_width" value="0.3"/>
+  <xacro:property name="base_height" value="0.1"/>
+  <xacro:property name="wheel_radius" value="0.06"/>
+  <xacro:property name="wheel_width" value="0.04"/>
+
+  <!-- Materiales y Colores -->
+  <material name="blue"><color rgba="0.1 0.3 0.8 1.0"/></material>
+  <material name="black"><color rgba="0.1 0.1 0.1 1.0"/></material>
+
+  <!-- Base Footprint (Origen proyectado en el suelo) -->
+  <link name="base_footprint"/>
+
+  <!-- Joint de anclaje al chasis -->
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Chasis (Base Link) -->
+  <link name="base_link">
+    <visual>
+      <!-- Se eleva a la mitad de su altura para que el origen quede en su base -->
+      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <!-- Macro para Ruedas de Tracción -->
+  <xacro:macro name="wheel" params="prefix x_reflect y_reflect">
+    <link name="${prefix}_wheel">
+      <visual>
+        <!-- Rotación de 90 grados en X (1.5708 rad) para acostar el cilindro -->
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <material name="black"/>
+      </visual>
+    </link>
+
+    <joint name="${prefix}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${prefix}_wheel"/>
+      <origin xyz="${x_reflect * (base_length/4)} ${y_reflect * (base_width/2 + wheel_width/2)} 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/> <!-- Gira sobre el eje Y -->
+    </joint>
+  </xacro:macro>
+
+  <!-- Instanciar ruedas usando la macro -->
+  <xacro:wheel prefix="left" x_reflect="-1" y_reflect="1" />
+  <xacro:wheel prefix="right" x_reflect="-1" y_reflect="-1" />
+
+  <!-- Rueda Caster (Soporte frontal) -->
+  <link name="caster_wheel">
+    <visual>
+      <geometry>
+        <sphere radius="${wheel_radius/2}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="caster_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_wheel"/>
+    <!-- Posicionada en la parte frontal y hacia abajo para tocar el suelo -->
+    <origin xyz="${base_length/3} 0 ${-wheel_radius/2}" rpy="0 0 0"/>
+  </joint>
+
+</robot>
