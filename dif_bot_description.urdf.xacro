@@ -8,11 +8,7 @@
   <xacro:property name="wheel_radius" value="0.06"/>
   <xacro:property name="wheel_width" value="0.04"/>
 
-  <!-- ========================================== -->
-  <!-- MACROS DE INERCIA (Fórmulas Físicas)       -->
-  <!-- ========================================== -->
-  
-  <!-- Inercia para un prisma rectangular (Caja) -->
+  <!-- MACROS DE INERCIA -->
   <xacro:macro name="box_inertia" params="m x y z o_xyz o_rpy">
     <inertial>
       <origin xyz="${o_xyz}" rpy="${o_rpy}"/>
@@ -23,7 +19,6 @@
     </inertial>
   </xacro:macro>
 
-  <!-- Inercia para un cilindro sólido -->
   <xacro:macro name="cylinder_inertia" params="m r h o_xyz o_rpy">
     <inertial>
       <origin xyz="${o_xyz}" rpy="${o_rpy}"/>
@@ -34,7 +29,6 @@
     </inertial>
   </xacro:macro>
 
-  <!-- Inercia para una esfera sólida -->
   <xacro:macro name="sphere_inertia" params="m r o_xyz o_rpy">
     <inertial>
       <origin xyz="${o_xyz}" rpy="${o_rpy}"/>
@@ -45,15 +39,11 @@
     </inertial>
   </xacro:macro>
 
-  <!-- ========================================== -->
-  <!-- MATERIALES                                 -->
-  <!-- ========================================== -->
+  <!-- MATERIALES -->
   <material name="blue"><color rgba="0.1 0.3 0.8 1.0"/></material>
   <material name="black"><color rgba="0.1 0.1 0.1 1.0"/></material>
 
-  <!-- ========================================== -->
-  <!-- ESTRUCTURA DEL ROBOT (Links y Joints)      -->
-  <!-- ========================================== -->
+  <!-- ================= ESTRUCTURA DEL ROBOT ================= -->
 
   <!-- Base Footprint -->
   <link name="base_footprint"/>
@@ -73,14 +63,12 @@
       </geometry>
       <material name="blue"/>
     </visual>
-    <!-- Colisión -->
     <collision>
       <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
       <geometry>
         <box size="${base_length} ${base_width} ${base_height}"/>
       </geometry>
     </collision>
-    <!-- Inercia (Masa: 5 kg) -->
     <xacro:box_inertia m="5.0" x="${base_length}" y="${base_width}" z="${base_height}" o_xyz="0 0 ${base_height/2}" o_rpy="0 0 0"/>
   </link>
 
@@ -94,14 +82,12 @@
         </geometry>
         <material name="black"/>
       </visual>
-      <!-- Colisión -->
       <collision>
         <origin xyz="0 0 0" rpy="1.5708 0 0"/>
         <geometry>
           <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
         </geometry>
       </collision>
-      <!-- Inercia (Masa: 0.5 kg) -->
       <xacro:cylinder_inertia m="0.5" r="${wheel_radius}" h="${wheel_width}" o_xyz="0 0 0" o_rpy="1.5708 0 0"/>
     </link>
 
@@ -126,14 +112,12 @@
       </geometry>
       <material name="black"/>
     </visual>
-    <!-- Colisión -->
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <sphere radius="${wheel_radius/2}"/>
       </geometry>
     </collision>
-    <!-- Inercia (Masa: 0.2 kg) -->
     <xacro:sphere_inertia m="0.2" r="${wheel_radius/2}" o_xyz="0 0 0" o_rpy="0 0 0"/>
   </link>
 
@@ -142,5 +126,9 @@
     <child link="caster_wheel"/>
     <origin xyz="${base_length/3} 0 ${-wheel_radius/2}" rpy="0 0 0"/>
   </joint>
+
+  <!-- ================= INCLUSIÓN DE SENSORES ================= -->
+  <!-- Esto carga el archivo sensors.xacro generado anteriormente -->
+  <xacro:include filename="sensors.xacro" />
 
 </robot>
